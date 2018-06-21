@@ -1,0 +1,10 @@
+[package]
+name = "rs-playground"
+version = "0.1.0"
+authors = ["Viktor"]
+
+[dependencies]
+kiss3d = "0.14.0"
+nalgebra = "0.14.4"
+ncollide3d = "0.15.4"
+nphysics3d = "0.8.3"
