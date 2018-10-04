@@ -3,7 +3,8 @@ extern crate kiss3d;
 extern crate nalgebra;
 extern crate ncollide3d;
 extern crate nphysics3d;
-
+extern crate rodio;
+extern crate glfw;
 
 //use na::{Vector3, UnitQuaternion};
 //use kiss3d::window::Window;
@@ -15,6 +16,10 @@ pub mod game_state;
 pub mod core {
     use renderer;
     use game_state;
+
+    use std::time as t_i;
+    use std::time as t_d;
+
     pub struct Core{
         r: renderer::Renderer,
         gs: game_state::GameState,
@@ -26,8 +31,16 @@ pub mod core {
         }
 
         pub fn run(&mut self){
+            let start_t = t_i::Instant::now();
+            let mut sim_t = t_i::Instant::now();
             while self.r.render(&self.gs) {
-                self.gs.step();
+                if sim_t <  t_i::Instant::now() {
+                    //simulation rate can be set here by setting the deltaT, must be set in world accordingly
+                    let delta_t = t_d::Duration::from_millis(1000) / 60;
+                    sim_t += delta_t;
+                    self.gs.step();
+                    self.r.get_all_input();
+                }
             }
         }
     }
@@ -35,6 +48,7 @@ pub mod core {
 
 
 fn main() {
+    //renderer::sound::test();
     let mut c = core::Core::new();
     c.run();
 
