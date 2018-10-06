@@ -4,7 +4,6 @@ extern crate nalgebra;
 extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate rodio;
-extern crate glfw;
 
 //use na::{Vector3, UnitQuaternion};
 //use kiss3d::window::Window;

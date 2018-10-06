@@ -4,22 +4,34 @@ use kiss3d::camera::FirstPerson;
 use kiss3d::window::Window;
 use kiss3d::light::Light;
 use kiss3d::scene::SceneNode;
+use kiss3d::event::{Action, WindowEvent};
 use game_state::GameState;
-use glfw::{Action, WindowEvent};
 use nalgebra::Point3;
+use game_state::entity::Entity;
+use std::collections::HashMap;
 
-pub struct Renderer {
+pub struct Renderer <'a> {
     window: Window,
     node: SceneNode,
     cam: FirstPerson,
+    nodeMap: HashMap<&'a Entity, SceneNode>,
 }
 
 impl Renderer {
     pub fn render(& mut self, gs: & GameState) -> bool{
-        let e = &gs.entities[0];
-        match gs.phys_world.rigid_body(e.handle) {
-            Some(body) => self.node.set_local_transformation(body.position()),
-            None => println!("no such luck")
+        for e in &gs.entities{
+            if !self.nodeMap.contains_key(e){
+                self.nodeMap.insert(e, self.window.add_cube(1.0, 1.0, 1.0));
+            }
+            match self.nodeMap.get(e){
+                Some(node) => {
+                    match gs.phys_world.rigid_body(e.handle) {
+                        Some(body) => self.node.set_local_transformation(body.position()),
+                        None => println!("Error in Renderer. No transformation found.")
+                    }
+                }
+                None => println!("Error in Renderer. No Node found.")
+            }
         }
 
         return self.window.render_with_camera(&mut self.cam);
@@ -28,12 +40,12 @@ impl Renderer {
     pub fn get_all_input(& mut self){
         for mut event in self.window.events().iter() {
             match event.value {
-                WindowEvent::Key(code, _, Action::Press, _) => {
+                WindowEvent::Key(code, Action::Press, _) => {
                     println!("You pressed the key with code: {:?}", code);
                     println!("Do not try to press escape: the event is inhibited!");
                     //event.inhibited = true // override the default keyboard handler
                 },
-                WindowEvent::Key(code, _, Action::Release, _) => {
+                WindowEvent::Key(code, Action::Release, _) => {
                     println!("You released the key with code: {:?}", code);
                     println!("Do not try to press escape: the event is inhibited!");
                     //event.inhibited = true // override the default keyboard handler
@@ -48,11 +60,11 @@ impl Renderer {
                     println!("You released the mouse button with modifiers: {:?}", mods);
                     //event.inhibited = true // dont override the default mouse handler
                 },
-                WindowEvent::CursorPos(x, y) => {
+                WindowEvent::CursorPos(x, y, _) => {
                     println!("Cursor pos: ({} , {})", x, y);
                     //event.inhibited = true // dont override the default mouse handler
                 },
-                WindowEvent::Scroll(xshift, yshift) => {
+                WindowEvent::Scroll(xshift, yshift, _) => {
                     println!("Cursor pos: ({} , {})", xshift, yshift);
                     //event.inhibited = true // dont override the default mouse handler
                 },
@@ -61,7 +73,7 @@ impl Renderer {
         }
     }
 
-    pub fn new() -> Renderer {
+    pub fn new() -> Renderer<'static> {
         let mut wdw = Window::new("rs-playground");
         let mut c      = wdw.add_cube(1.0, 1.0, 1.0);
 
@@ -69,6 +81,6 @@ impl Renderer {
         c.set_color(1.0, 0.0, 0.0);
 
         //wdw.set_light(Light::StickToCamera);
-        Renderer {window : wdw, node:c, cam: camera}
+        Renderer {window : wdw, node:c, cam: camera, nodeMap: HashMap::new()}
     }
 }

@@ -8,6 +8,7 @@ use nalgebra as na;
 
 const COLLIDER_MARGIN: f32 = 0.01;
 
+#[derive(PartialEq, Eq, Hash)]
 pub struct Entity {
     pub i : u32,
     pub handle : BodyHandle,
