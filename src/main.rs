@@ -4,10 +4,15 @@ extern crate nalgebra;
 extern crate ncollide3d;
 extern crate nphysics3d;
 extern crate rodio;
+extern crate specs;
+#[macro_use]
+extern crate specs_derive;
 
 //use na::{Vector3, UnitQuaternion};
 //use kiss3d::window::Window;
 //use kiss3d::light::Light;
+
+
 pub mod renderer;
 
 pub mod game_state;
@@ -16,29 +21,51 @@ pub mod core {
     use renderer;
     use game_state;
 
-    use std::time as t_i;
-    use std::time as t_d;
+    use specs::System;
+    use specs::Read;
+    use specs::DispatcherBuilder;
+    use specs::Dispatcher;
+
+    use std::time::Instant as t_i;
+    use std::time::Duration as t_d;
+    use std::ops::Deref;
+    use nphysics3d;
+
 
     pub struct Core{
-        r: renderer::Renderer,
         gs: game_state::GameState,
+        //dsp: Dispatcher,
     }
 
     impl Core{
         pub fn new() -> Core{
-            Core{r : renderer::Renderer::new(), gs : game_state::GameState::new()}
+            Core{gs : game_state::GameState::new()}
         }
 
         pub fn run(&mut self){
-            let start_t = t_i::Instant::now();
-            let mut sim_t = t_i::Instant::now();
-            while self.r.render(&self.gs) {
-                if sim_t <  t_i::Instant::now() {
+            let start_t = t_i::now();
+            let mut sim_t = t_i::now();
+
+            self.gs.world.add_resource(renderer::RenderInfo{keep_open: true});
+
+            let mut dsp = DispatcherBuilder::new().with_thread_local(renderer::Renderer::new()).build();
+
+            while self.gs.world.read_resource::<renderer::RenderInfo>().deref().keep_open {
+                //self.r.run(
+                //    (self.gs.world.read_storage::<game_state::graphic::Graphic>(),
+                //     self.gs.world.read_storage::<game_state::physics::Physics>(),
+                //     self.gs.world.read_resource::<nphysics3d::world::World<f32>>()));
+                dsp.dispatch(&self.gs.world.res);
+                //println!("render");
+
+                while sim_t <  t_i::now() {
                     //simulation rate can be set here by setting the deltaT, must be set in world accordingly
-                    let delta_t = t_d::Duration::from_millis(1000) / 60;
+                    let delta_t = t_d::from_millis(1000) / 60;
                     sim_t += delta_t;
                     self.gs.step();
-                    self.r.get_all_input();
+                    //println!("tick");
+
+                    //self.r.get_all_input();
                 }
             }
         }

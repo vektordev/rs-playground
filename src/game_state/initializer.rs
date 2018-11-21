@@ -10,7 +10,7 @@ impl Initializer{
 
     }
 
-    pub fn build() -> GameState {
-        return GameState::new();
-    }
+    //pub fn build() -> GameState {
+    //   return GameState::new();
+    //}
 }
